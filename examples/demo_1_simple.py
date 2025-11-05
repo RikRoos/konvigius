@@ -40,22 +40,29 @@ line = f"{'- ' * 15}"
 
 print(line, __doc__, line)
 print("Username:", cfg.username)
-print("Debug mode:", cfg.debug)
-print("No-Debug mode:", cfg.no_debug)  # inverted bonus
+print("Debug:", cfg.debug)
+print("No-Debug:", cfg.no_debug)  # inverted bonus
 print("Timeout:", cfg.timeout)
 print(line)
 print("Test/Username:", cfg_tst.username)
-print("Test/Debug mode:", cfg_tst.debug)
-print("test/No-Debug mode:", cfg_tst.no_debug)
+print("Test/Debug:", cfg_tst.debug)
+print("test/No-Debug:", cfg_tst.no_debug)
 print("Test/Timeout:", cfg_tst.timeout)
 print(line + "\n")
 
 cfg.timeout = 70
+cfg.debug = True
 cfg_tst.timeout = 120
 
+print("Config values after having made changes...:\n")
+
 print("Timeout:", cfg.timeout)
+print("Debug:", cfg.debug)
+print("No-Debug:", cfg.no_debug)
 print(line)
 print("Test/Timeout:", cfg_tst.timeout)
+print("Debug:", cfg_tst.debug)
+print("No-Debug:", cfg_tst.no_debug)
 print(line + "\n")
 
 

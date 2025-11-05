@@ -77,7 +77,7 @@ print("port:", cfg.port)
 print(line)
 
 print("\n\n--- internal option values ---")
-print(cfg.info_vars())
+print(cfg.inspect_vars())
 
 
 # === END ===

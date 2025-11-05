@@ -275,14 +275,13 @@ def test_faulty_type_init_range_min_gt_max():
         cfg = Config.config_factory(schema)
 
 
-def test_range_no_max_raises():
+def test_range_without_max_raises():
     schema = [
         Schema("timeout", default=30, r_min=1, field_type=int),
     ]
     cfg = Config.config_factory(schema)
     assert cfg.timeout == 30
     with pytest.raises(ConfigRangeError):
-        # with pytest.raises(ConfigTypeError):
         cfg.timeout = 0
 
 
@@ -956,6 +955,34 @@ def test_version_fallback(monkeypatch):
     monkeypatch.setattr(metadata, "version", lambda name: (_ for _ in ()).throw(metadata.PackageNotFoundError))
     import konvigius
     assert konvigius.__version__ == "0.0.0"
+
+def test_mutating_range_raises():
+    def fn_validate_range(value, cfg):
+        if value < cfg.min_sentences:
+            raise ConfigRangeError("max-sentences ({}) must be >= min-sentences ({})".format(value,
+                                                                                          cfg.min_sentences))
+
+    schema = [
+        Schema("min_sentences", default=3, field_type=int, r_min=1, r_max=10),
+        Schema("max_sentences", default=5, field_type=int, r_min=1, r_max=10, fn_validator=fn_validate_range),
+        Schema("debug", field_type=bool),
+    ]
+    cfg = Config.config_factory(schema)
+    assert cfg.min_sentences == 3
+    assert cfg.max_sentences == 5
+
+    with pytest.raises(ConfigRangeError):
+        cfg.min_sentences = 7
+    assert cfg.min_sentences == 3    # default min value not changed
+
+    with pytest.raises(ConfigRangeError):
+        cfg.max_sentences = 2
+    assert cfg.max_sentences == 5    # default max value not changed
+
+    cfg.min_sentences = 5
+    cfg.max_sentences = 7
+    assert cfg.min_sentences == 5
+    assert cfg.max_sentences == 7
 
 
 # === END ===

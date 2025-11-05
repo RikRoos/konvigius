@@ -1,5 +1,57 @@
 # src/konvigius/configlib.py
-"""insert docstring here"""
+"""
+Module for defining and managing dynamic configuration objects with metadata-driven
+options.
+
+This module provides classes to define configuration options with metadata, create
+configuration objects dynamically, and validate the consistency of metadata during
+configuration object creation.
+It enables easy-to-use configuration management by transforming options into attributes
+of a configuration object.
+
+Classes:
+    Option: Represents a configuration option with associated metadata. Instances of
+            this class are dynamically converted into attributes of a configuration
+            object.
+
+    Config: The base class for creating dynamic configuration objects. Configuration
+            objects are instantiated with attributes derived from Option objects. The
+            configuration object automatically validates that the metadata of an Option
+            is consistent upon creation.
+
+    ConfigField:
+            A Helper-Class.
+            A building block of the Config class. It is responsible for converting an
+            Option object into an attribute within the Config class.
+
+Usage Example:
+    Here is an example of how to create a configuration object using the Option and
+    Config classes:
+
+```python
+from konvigius import Schema, Config
+
+cfg = Config.config_factory([
+          Schema("url", default="example.com"),
+          Schema("port", default=80, domain=(80, 443))
+])
+
+print(cfg.url)      # Output: example.com
+print(cfg.port)     # Output: 80
+cfg.port = 443      # OK
+print(cfg.port)     # Output: 443
+cfg.port = 1000     # Raises a ConfigDomainError:
+                    #     DomainValidator: value (1000) is not in the domain of
+                    #                      acceptable values
+```
+
+In this example:
+- `url` and `port` are dynamic attributes of the configuration object `cfg`.
+- `url` has a default value of `"example.com"`.
+- `port` has a default value of `80` and is constrained to the domain `(80, 443)`,
+   meaning it can only have values `80` or `443`. Any attempt to assign a value
+   outside this domain raises a `ConfigDomainError`.
+"""
 from __future__ import annotations  # prefends 'config' lint errors
 import json
 from types import SimpleNamespace
@@ -138,7 +190,7 @@ class Option:
         self.fn_computed: ComputedFn | tuple[ComputedFn, ...] | None = entry.fn_computed
         self.do_validate: bool = not entry.no_validate
         self.help_add_default: bool = entry.help_add_default
-        self.help_text: str | None = self.setup_helpline(
+        self.help_text: str | None = self._setup_helpline(
             self.name,
             entry.help_text,
             help_map,
@@ -186,7 +238,7 @@ class Option:
         return name, _short_flag or None
 
     @staticmethod
-    def setup_helpline(name, help_text, help_map, add_dflt, dflt):
+    def _setup_helpline(name, help_text, help_map, add_dflt, dflt):
         """Build the help line used for the CLI `-h` (help) output.
 
         Generates a descriptive help line for a configuration option. The function
@@ -219,7 +271,7 @@ class Option:
                 The formatted help line suitable for CLI help display.
 
         Example:
-            `>>> Option.setup_helpline("debug", "Enable debug mode", None, True, False)`
+            `>>> Option._setup_helpline("debug", "Enable debug mode", None, True, False)`
                 "Enable debug mode (default 'False')"
         """
         # setup the helpline
@@ -427,10 +479,9 @@ class ConfigField:
             # transaction mode, put all in temporary pending datastore
             cfg._pending_values[self.option.name] = value
         else:
-            self.option.validate_default(value, cfg)
-            self.option.validate_custom(value, cfg)
-            cfg._values[self.option.name] = value
-            self.option.validate_computed(value, cfg)
+            cfg.start_transaction()
+            cfg._pending_values[self.option.name] = value
+            cfg.commit_transaction(suppress_error_prefix=True)
 
 
 # -----------------------------------------------------------------------------
@@ -465,21 +516,26 @@ class Config:
         self._trx_: bool = False  # transaction mode
 
     def _create_inverted_bool_properties(self):
-        """Auto generate inverted version of boolean fields."
+        """Auto generate inverted version of boolean fields.
 
         Lazy operation.
         """
 
-        # helper function returning a closure:
+        # inner-helper function returning a closure:
         def fn_return_inverted(
             source_field: str, field_name: str
         ) -> Callable[[str, SimpleNamespace], bool]:
+            """TODO:"""
+
             def fn_return_bool(value: str, cfg: SimpleNamespace) -> bool:
-                value = cfg._values[source_field]
+                # print("return inverted-bool", value, "--" , source_field)
+                # value = cfg._values[source_field]
                 return not value
 
             fn_return_bool.field_name = field_name  # type: ignore[attr-defined]
             return fn_return_bool
+
+        # end-closure
 
         for option in self._metadata.values():
             if not option.do_validate:
@@ -529,7 +585,7 @@ class Config:
         self._trx_ = True
         self._pending_values.clear()
 
-    def commit_transaction(self):
+    def commit_transaction(self, suppress_error_prefix=False):
         if not self._trx_:
             return
 
@@ -552,7 +608,12 @@ class Config:
             self._values = merged
 
         except Exception as e:
-            raise ConfigError(f"Commit raised an error (changes are undone): {e}")
+            raise
+            # if suppress_error_prefix:
+            #     msg = f"{e}")
+            #     raise ConfigError(e)
+            # else:
+            #     msg = f"Commit raised an error (changes are undone): {e}")
 
         finally:
             self._trx_ = False
@@ -654,7 +715,7 @@ class Config:
     @classmethod
     def from_dict(cls, schema: list[Schema], values: dict):
         """
-        Creates a Config instance from a schema and a dictionary of override
+        Create a Config instance from a schema and a dictionary of override
         values.
 
         Use this to load user-configured values in a dictionary while falling
@@ -679,11 +740,13 @@ class Config:
         """
         cfg = cls.config_factory(schema)
 
+        cfg.start_transaction()
         for name, value in values.items():
             if name not in cfg._metadata:
                 raise ConfigInvalidFieldError(f"Invalid config field: '{name}'.", name)
 
             setattr(cfg, name, value)  # triggers validation via descriptor
+        cfg.commit_transaction()
 
         return cfg
 
@@ -719,7 +782,7 @@ class Config:
         return self._metadata.get(name)
 
     def to_dict(self) -> dict:
-        """Returns a dictionary representation of the current config values.
+        """Return a dictionary representation of the current config values.
 
         This includes both default values and any values overridden at runtime.
 
@@ -729,7 +792,7 @@ class Config:
         return {name: getattr(self, name) for name in self._metadata.keys()}
 
     def to_json(self, *, indent: int = 2) -> str:
-        """Serializes the current config values to a JSON-formatted string.
+        """Serialize the current config values to a JSON-formatted string.
 
         Args:
             indent (int): Number of spaces for indentation in the JSON output.
@@ -737,8 +800,10 @@ class Config:
         Returns:
             str: JSON string of the current config values.
         """
+        # TODO:this is not finished, actual / pending values are not incooperated
         return json.dumps(self.to_dict(), indent=indent)
 
+    # TODO: add parameter exclude_fields (e.g. big lists)
     def inspect_vars(self, chop_at: int = 45) -> str:
         """
         Utility to display field names, values and their help text from the
@@ -775,7 +840,15 @@ class Config:
         return "\n".join(lines)
 
     def copy_config(self, dirty=False) -> SimpleNamespace:
-        """Create a simple copy of the config attribute values."""
+        """Create a simple copy of the config attribute values.
+
+        Args:
+            dirty (bool): If True, includes mutated values in the copy, even if they
+                          are not final.
+
+        Returns:
+            SimpleNameSpace: A copy of the config values.
+        """
         data = {fname: value for fname, value, _ in self}
         data["_values"] = {**self._values}
         data["_computed_values"] = {**self._computed_values}

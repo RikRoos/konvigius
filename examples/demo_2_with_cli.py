@@ -23,7 +23,7 @@ from konvigius import Config, Schema, cli_parser
 schema = [
     Schema("username|u", default="guest", field_type=str),
     Schema("debug|d", default=False, field_type=bool),
-    Schema("wrap", default=True, field_type=bool),
+    Schema("no_wrap", default=False, field_type=bool),
     Schema(
         "timeout|t",
         default=30,
@@ -42,8 +42,8 @@ cfg.test_var = "RikRoos"
 last_username = cfg.username
 last_debug = cfg.debug
 last_no_debug = cfg.no_debug
-last_wrap = cfg.wrap
 last_no_wrap = cfg.no_wrap
+last_wrap = cfg.wrap
 last_timeout = cfg.timeout
 
 # Parse the CLI arguments from the terminal.
@@ -57,8 +57,8 @@ print("Config values at start...")
 print("Username:", last_username)
 print("Debug mode:", last_debug)
 print("No-Debug mode:", last_no_debug)
-print("Wrap mode:", last_wrap)
 print("No-wrap mode:", last_no_wrap)
+print("Wrap mode:", last_wrap)
 print("Timeout:", last_timeout)
 print(line)
 print("Config values after CLI...:")
@@ -66,13 +66,13 @@ print(line)
 print("Username:", cfg.username)
 print("Debug mode:", cfg.debug)
 print("No-Debug mode:", cfg.no_debug)
-print("Wrap mode:", cfg.wrap)
 print("No-wrap mode:", cfg.no_wrap)
+print("Wrap mode:", cfg.wrap)
 print("Timeout:", cfg.timeout)
 print(line)
 
 print("\n\n--- internal stores values (S:from schema, C:computed) ---")
-print(cfg.info_vars())
+print(cfg.inspect_vars())
 
 
 # === END ===

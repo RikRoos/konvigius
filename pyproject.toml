@@ -1,7 +1,7 @@
 [project]
 name = "konvigius"
-version = "0.0.3"
-description = "A library to create an application config object with validation and a CLI parser included."
+version = "0.0.4"
+description = "Python library for managing application config objects with validation and a CLI parser included."
 readme = "README.md"
 keywords = [ "config", "configuration", "validation", "CLI" ]
 authors = [ { name = "Rik Roos, Roos IT Logics", email = "opensource@bytelogic.nl" } ]
@@ -18,7 +18,7 @@ classifiers = [
 Homepage = "https://github.com/RikRoos/konvigius"
 Documentation = "https://github.com/RikRoos/konvigius#readme"
 Issues = "https://github.com/RikRoos/konvigius/issues"
-Changelog = "https://github.com/RikRoos/konvigius/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/RikRoos/konvigius/blob/master/src/konvigius/CHANGELOG.md"
 Source = "https://github.com/RikRoos/konvigius"
 
 [build-system]

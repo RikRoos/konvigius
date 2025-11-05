@@ -74,7 +74,7 @@ print("seconds:", cfg.in_seconds, "  (computed)")
 print(line)
 
 print("\n\n--- internal values ---")
-print(cfg.info_vars())
+print(cfg.inspect_vars())
 
 
 # === END ===

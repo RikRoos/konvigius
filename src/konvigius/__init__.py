@@ -38,8 +38,8 @@ metadata of that field such as:
 - default value (e.g. userrole `admin`)
 - is-required (bool `True False`)
 - domain (a  tuple)
-- minimum value, length string or number of cells 
-- maximum value, length string or number of cells 
+- minimum value, length string or number of cells
+- maximum value, length string or number of cells
 - custom validation functions (raising exceptions)
 - custom auto-field-creation functions
 - help text for the field (to support CLI mode help info)
@@ -48,7 +48,7 @@ metadata of that field such as:
 Then you pass that schema with 1 or more Schema-objects as a list to the factory
 function of the Config class; that produces a config object.
 
-Here are some simple examples. The package also comes with a subdirectory (examples) 
+Here are some simple examples. The package also comes with a subdirectory (examples)
 containing more elaborate, working demo Python files. Each file includes a short manual.
 
 ``` python
@@ -69,7 +69,7 @@ cfg_1.timeout = 99       # raises ConfigRangeError
 cfg_1.timeout = 'abc'    # raises ConfigTypeError
 ```
 
-Now create an _additional_ new config instance using the _same schema_, but with a _different_ 
+Now create an _additional_ new config instance using the _same schema_, but with a _different_
 default value for the timeout option.
 
 ``` python
@@ -106,11 +106,11 @@ It creates derived fields for the values of the fields 'minutes' and 'num_spaces
 ``` python
 @with_field_name('spaces')
 def fn_spaces(value, cfg):
-    return ' ' * cfg.num_spaces 
+    return ' ' * cfg.num_spaces
 
 @with_field_name('in_seconds')
 def fn_seconds(value, cfg):
-    return 60 * cfg.minutes 
+    return 60 * cfg.minutes
 
 schema = [
     Schema("num_spaces|s", default=2, fn_computed=fn_spaces, field_type=int, help_text="Number of spaces."),
@@ -138,7 +138,7 @@ print("seconds:", cfg.in_seconds, "  (computed)")
     Defines metadata for a config field, including default value, type constraints,
     and optional numeric bounds or testing on length of 'sized' objects like str and
     list.
-    A one or more Schema-objects are as a list passed to the config-factory which 
+    A one or more Schema-objects are as a list passed to the config-factory which
     produces a Config-instance with field properties according the Schema definitions.
 
 ### Option

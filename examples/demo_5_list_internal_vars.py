@@ -55,12 +55,12 @@ line = f"{'- ' * 15}"
 
 print(line, __doc__, line)
 print("\nShowing vars of instance `cfg`  (S:schema C:computed):\n")
-print(cfg.info_vars())
+print(cfg.inspect_vars())
 
 print("\n", line)
 
 print("\nShowing vars of instance `cfg_tst`:\n")
-print(cfg_tst.info_vars())
+print(cfg_tst.inspect_vars())
 
 
 # === END ===

@@ -90,6 +90,7 @@ def _stringify_cli_args(cli_args: list[Any] | None) -> list[str] | None:
         # Argparse expects all command-line arguments to be strings, because
         # they normally come from sys.argv, which is a list of strings.
         return list(map(str, cli_args))
+    return None
 
 
 def run_parser(

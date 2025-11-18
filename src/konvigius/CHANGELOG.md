@@ -10,8 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
  Planned improvements for next release:
 
+### Regarding Schema objects 
+
+- Loading a configuration schema from a JSON file or a TOML file. 
+- Loading a configuration schema from a JSON file or a TOML string variable. 
+- Add convenience method to create Schema objects on the fly
+
+### Others
 - Update and refine more docstrings
 - Additional examples in README
+- Error messages showing field names (!)
+- Strict mode that prevents fields from being created outside the schema.
+Currently, if a configuration field name is misspelled, it is silently created.
 - Possible bump to release 0.1.0
 
 ---
